@@ -1,0 +1,56 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Parámetros del modelo
+T = 20                # Horizonte de tiempo
+alpha = 0.33          # Elasticidad del capital
+delta = 0.05          # Tasa de depreciación
+Z0 = 1.2              # Nivel inicial de productividad (shock positivo)
+Z_decay = 0.95        # Tasa de disipación del shock
+K0 = 0.05             # Capital inicial
+L0 = 0.2              # Trabajo inicial
+A = 1                 # Nivel de productividad a largo plazo
+
+# Inicialización de variables
+Y = np.zeros(T)       # Producción
+C = np.zeros(T)       # Consumo
+I = np.zeros(T)       # Inversión
+K = np.zeros(T)       # Capital
+L = np.zeros(T)       # Trabajo
+Z = np.zeros(T)       # Productividad
+
+# Condiciones iniciales
+K[0] = K0
+L[0] = L0
+Z[0] = Z0
+
+# Simulación del modelo
+for t in range(T):
+    if t > 0:
+        Z[t] = A + (Z[t-1] - A) * Z_decay         # Productividad converge a A
+        K[t] = (1 - delta) * K[t-1] + I[t-1]      # Ley de movimiento del capital
+        L[t] = L[t-1] * 0.95                      # Trabajo decae ligeramente
+
+    # Producción Cobb-Douglas
+    Y[t] = Z[t] * (K[t] ** alpha) * (L[t] ** (1 - alpha))
+
+    # Asignación simple de recursos: 60% al consumo, 40% a inversión
+    C[t] = 0.6 * Y[t]
+    I[t] = 0.4 * Y[t]
+
+# Graficar resultados
+fig, axs = plt.subplots(2, 3, figsize=(15, 8))
+axs = axs.flatten()
+
+titles = ['Producción (Y)', 'Consumo (C)', 'Inversión (I)', 'Capital (K)', 'Trabajo (N)']
+variables = [Y, C, I, K, L]
+
+for i in range(5):
+    axs[i].plot(variables[i], color='blue')
+    axs[i].set_title(titles[i])
+    axs[i].grid(True)
+
+axs[5].axis('off')  # Último espacio vacío
+
+plt.tight_layout()
+plt.show()
