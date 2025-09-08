@@ -1,0 +1,82 @@
+﻿#Pregunta 1a 
+#Primero se procede a importar la base de datos
+import C:\Users\USUARIO\Desktop\base_caso1\sc_mensual.xlsx
+#Luego se aplica la transformación logarítmica a la variable créditos
+series ln_cred = log(creditos)
+#Se procede a realizar el análisis visual e inspeccionar el correlograma
+graph graph01.line ln_cred
+ln_cred.correl
+#El análisis visual sugiere no estacionariedad, por ello aplicamos pruebas para detectar la presencia de raíz unitaria
+ln_cred.uroot(exog=trend)
+ln_cred.uroot(exog=c)
+ln_cred.uroot(exog=none)
+#Diferenciamos la serie en cuestión, dada la presencia de raíz unitaria
+series dln_cred = d(ln_cred)
+#De nuevo, se procede a realizar el análisis visual e inspeccionar el correlograma
+graph graph02.line dln_cred
+dln_cred.correl
+#La serie diferenciada sugiere estacionariedad
+#Pregunta 1b
+#Acápite i
+#Primero se procede a importar la base de datos
+import C:\Users\USUARIO\Desktop\base_caso1\ventas.xlsx
+#Después se aplica la transformación logarítmica a la variable créditos
+series ln_ventas = log(f_ventas)
+#Se procede a realizar el análisis visual e inspeccionar el correlograma
+graph graph03.line ln_ventas
+ln_ventas.correl
+#Acápite ii
+#Se realiza el procedimiento de Dolado et al, al final testeamos el modelo sin tendencia ni constante, luego identificamos el quiebre estructural.
+ln_ventas.uroot(exog=trend)
+ln_ventas.uroot(exog=c)
+ln_ventas.uroot(exog=none)
+ln_ventas.buroot(exog=trend)
+
+
+#Acápite iii
+#Ya identificamos un quiebre, ahora falta identificar el otro 
+smpl 2010M01 2024M12
+ln_ventas.buroot(exog=trend)
+#Al hacer esto se identifican dos quiebres uno en 2009M08 y otro en 2020M01
+
+
+# Se va a limpiar los quiebres estructurales para la serie ln_ventas
+#Ahora se crean 2 variables para los quiebres identificados
+genr d1 = 0
+smpl 2009m08 @last
+genr d1 = 1
+smpl @all
+
+
+genr d2 = 0
+smpl 2020m01 @last
+genr d2 = 1
+smpl @all
+
+
+#Generar tendencias segmentadas
+genr trend_d1 = d1*@trend
+genr trend_d2 = d2*@trend
+
+
+#Estimar el modelo con controles por quiebres
+equation eq_quiebres.ls ln_ventas c @trend d1 trend_d1 d2 trend_d2
+eq_quiebres.makeresids residuo_limpio
+
+
+#Acápite iv
+# Es teórica, está en el documento -.-
+#Acápite v
+#Estimar AR(1),AR(2),AR(3),AR(4)
+equation eq_ar1.ls residuo_limpio  ar(1)
+eq_ar1.makeresids res_ar1
+equation eq_ar2.ls residuo_limpio  ar(2)
+eq_ar2.makeresids res_ar2
+equation eq_ar3.ls residuo_limpio  ar(3)
+eq_ar3.makeresids res_ar3
+equation eq_ar3.ls residuo_limpio  ar(4)
+eq_ar4.makeresids res_ar4
+#Estimar ARMA(1,1)
+equation eq_arma11.ls residuo_limpio  ar(1) ma(1)
+eq_arma11.makeresids res_arma11
+res_arma11.correl
